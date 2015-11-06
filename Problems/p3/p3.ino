@@ -17,7 +17,41 @@
 
 #include <proc.h>
 
+class Loudspeaker {
+  Lock* _l;
+  Cond* _c;
+  int num_waiting;
+  bool available;
 
+public:
+  Loudspeaker() {
+    _l = new Lock();
+    _c = new Cond(_l);
+    num_waiting = 0;
+    available = true;
+  };
+
+  void acquire (){
+    _l->lock();
+    if (!available) {
+      _l->unlock();
+      _c->wait();
+    }
+    available = false;
+    _l->unlock();
+  }
+
+  void release() {
+    _l->lock();
+    available = true;
+    if (_c->waiting()) {
+      _c->signal();
+    } else {
+      _l->unlock();
+    }
+  }
+
+};
 
 class Barrier {
 
@@ -49,6 +83,8 @@ class Barrier {
 			_l->lock();
 			if (waiting < _n-1){
 				waiting++;
+				Serial.print("Waiting: ");
+				Serial.println(waiting);
 				_l->unlock();
 				_c->wait();
 				waiting--;
@@ -62,6 +98,7 @@ class Barrier {
 };
 
 Barrier B(3);
+Loudspeaker speaker;
 
 class CalcThread : Process {
 	public:
@@ -98,8 +135,10 @@ class Sum : CalcThread {
 			for (int i = 0; i < 3; ++i)
 				output += threads[i]->get_num();
 
+			speaker.acquire();
 			Serial.print("Sum = ");
 			Serial.println(output);
+			speaker.release();
 
 			B.wait();
 		}
@@ -132,8 +171,10 @@ class Mean : CalcThread {
 			for (int i = 0; i < 3; ++i)
 				output += threads[i]->get_num()/3.0;
 			
+			speaker.acquire();
 			Serial.print("Mean = ");
 			Serial.println(output);
+			speaker.release();
 
 			B.wait();
 		}
@@ -162,11 +203,14 @@ class Printer : CalcThread {
 			/* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
 			B.wait();
 
+			speaker.acquire();
 			Serial.print("Numbers: [");
 			for (int i = 0; i < 3; ++i) {
 				Serial.print(threads[i]->get_num());
 			}
 			Serial.println("]");
+
+			speaker.release();
 
 			B.wait();
 		}
@@ -183,6 +227,7 @@ void setup() {
 	Serial.flush();
 	
 	B.reinit();
+	speaker = Loudspeaker(); // For print statements
 
 	s = new Sum(1); //start first thread
 	m = new Mean(2); //start second thread
