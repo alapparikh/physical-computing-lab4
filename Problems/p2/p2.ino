@@ -34,24 +34,68 @@ class MatingArea {
      * to solve the problem.  We just left these here as
      * a reminder on the syntax. */
     Lock* _l;
-    Cond* _c;
+    Cond* _c_he;
+    Cond* _c_she;
+    Cond* _c_it;
+    int hes;
+    int shes;
+    int its;
 
   public:
     MatingArea () {  //Constructor for club
       _l = new Lock();
-      _c = new Cond(_l);
+      _c_he = new Cond(_l);
+      _c_she = new Cond(_l);
+      _c_it = new Cond(_l);
+      hes = 0;
+      shes = 0;
+      its = 0;
     }
 
     void he_ready() {
       /*TODO: Only return when there is a she and an it also ready*/
+      _l->lock();
+      if(shes > 0 && its > 0) {
+        _c_she->signal();
+        _c_it->signal();
+        _l->unlock();
+        return;
+      }
+      hes++;
+      _l->unlock();
+      _c_he->wait();
+      hes--;
+      return;
     }
 
     void she_ready() {
       /*TODO: Only return when there is a he and an it also ready*/
+      _l->lock();
+      if(hes > 0 && its > 0) {
+        _c_he->signal();
+        _c_it->signal();
+        _l->unlock();
+        return;
+      }
+      shes++;
+      _l->unlock();
+      _c_she->wait();
+      shes--;
     }
 
     void it_ready() {
       /*TODO: Only return when there is a he and a she also ready*/
+      _l->lock();
+      if(hes > 0 && shes > 0) {
+        _c_he->signal();
+        _c_she->signal();
+        _l->unlock();
+        return;
+      }
+      its++;
+      _l->unlock();
+      _c_it->wait();
+      its--;
     }
 };
 
