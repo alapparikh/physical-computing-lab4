@@ -56,7 +56,6 @@ class Club {
     void redditor_enter() {
       /*TODO: make it so that this function only returns when it is safe for
        *      redditor to enter the club. */
-      Serial.println("Redditor trying to enter");
        
       _l->lock();
       if (num_4channers > 0) {
@@ -170,30 +169,30 @@ public:
     /* TODO: light up column #_id on the LED matrix */
     hang_out();
     daclub.fourchanner_exit();
-  }
+  }Problems
 };
 
 
 // the setup routine runs once when you press reset:
 void setup() {                
 
-//  Redditor *r;
-//  Fourchanner *f;
+  Redditor *r;
+  Fourchanner *f;
   
   Serial.begin(9600); // open serial terminal
-//  Process::Init();  // start the threading library
+  Process::Init();  // start the threading library
 
   Serial.println("Hello world");
   
-//  daclub = Club();
-//  r = new Redditor(1); //start first thread
-//  r = new Redditor(2); //start second thread
-//  f = new Fourchanner(4); //start third thread
-//  f = new Fourchanner(5); //start fourth thread
+  daclub = Club();
+  r = new Redditor(1); //start first thread
+  r = new Redditor(2); //start second thread
+  f = new Fourchanner(4); //start third thread
+  f = new Fourchanner(5); //start fourth thread
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-//  Process::Start();
+  Process::Start();
 }
 
