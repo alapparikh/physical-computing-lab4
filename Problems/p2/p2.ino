@@ -26,6 +26,42 @@
 
 #include <proc.h>
 
+class ReportingArea {
+  Lock* _l;
+  Cond* _c;
+  int num_waiting;
+  bool available;
+
+public:
+  ReportingArea() {
+    _l = new Lock();
+    _c = new Cond(_l);
+    num_waiting = 0;
+    available = true;
+  };
+
+  void acquire (){
+    _l->lock();
+    if (!available) {
+      _l->unlock();
+      _c->wait();
+    }
+    available = false;
+    _l->unlock();
+  }
+
+  void release() {
+    _l->lock();
+    available = true;
+    if (_c->waiting()) {
+      _c->signal();
+    } else {
+      _l->unlock();
+    }
+  }
+
+};
+
 class MatingArea {
 
     /* We have declared one lock and one condition
@@ -100,6 +136,7 @@ class MatingArea {
 };
 
 MatingArea ma;
+ReportingArea ra;
 
 class He : Process {
 
@@ -122,10 +159,14 @@ class She : Process {
 
     void loop () {
       delay(random(300, 1500)); //waste time
+      ra.acquire();
       Serial.println("She: I'm born!");
       Serial.println("She: Adult now, time to form a triad!");
+      ra.release();
       ma.she_ready(); //do not pass until there is a he and an it
+      ra.acquire();
       Serial.println("She: Yay, I'm part of a triad!");
+      ra.release();
     }
 };
 
@@ -136,10 +177,14 @@ class It : Process {
 
     void loop () {
       delay(random(300, 1500)); //waste time
+      ra.acquire();
       Serial.println("It: I'm born!");
       Serial.println("It: Adult now, time to form a triad!");
+      ra.release();
       ma.it_ready(); //do not pass until there is an it and a she
+      ra.acquire();
       Serial.println("It: Yay, I'm part of a triad!");
+      ra.release();
     }
 };
 
@@ -155,8 +200,10 @@ void setup() {
   Process::Init();  // start the threading library
 
   ma = MatingArea();
+  ra = ReportingArea(); // For print statements
+
   h = new He(); //start first thread
-  h = new He(); //start second thread
+  //h = new He(); //start second thread
   s = new She(); //start third thread
   i = new It(); //start fourth thread
 }

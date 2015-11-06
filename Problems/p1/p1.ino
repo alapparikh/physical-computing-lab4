@@ -22,6 +22,13 @@
 
 #include <proc.h>
 
+int row_pin = 8;
+int column1_pin = 9;
+int column2_pin = 10;
+int column3_pin = 11;
+int column4_pin = 12;
+int column5_pin = 13;
+int column_pins[5] = {column1_pin, column2_pin,column3_pin,column4_pin,column5_pin};
 
 void hang_out() {
 	delay(random(300,1500)); //waste time
@@ -130,9 +137,15 @@ class Club {
 Club daclub;
 int columns [5] = {0,0,0,0,0};
 
-void printColumns() {
+void lightLED() {
 	for(int i = 0; i < 5; i++){
 		Serial.print(columns[i]);
+		if (columns[i]) {
+			digitalWrite(column_pins[i], LOW);
+		}
+		else {
+			digitalWrite(column_pins[i], HIGH);
+		}
 	}
 	Serial.println();
 }
@@ -153,12 +166,13 @@ public:
 		/* TODO: light up column #_id on the LED matrix */
 		columns[_id-1] = 1;
 		Serial.print("1a");
-		printColumns();
+		lightLED();
 		hang_out();
 		Serial.print("1b");
 		columns[_id-1] = 0;
-		printColumns();
+		lightLED();
 		daclub.redditor_exit();
+		delay(100);
 	}
 };
 
@@ -178,12 +192,13 @@ public:
 		/* TODO: light up column #_id on the LED matrix */
 		columns[_id-1] = 1;
 		Serial.print("2a");
-		printColumns();
+		lightLED();
 		hang_out();
 		columns[_id-1] = 0;
 		Serial.print("2b");
-		printColumns();
+		lightLED();
 		daclub.fourchanner_exit();
+		delay(100);
 	}
 };
 
@@ -193,6 +208,20 @@ void setup() {
 
 	Redditor *r;
 	Fourchanner *f;
+
+	pinMode(row_pin, OUTPUT);
+	pinMode(column1_pin, OUTPUT);
+	pinMode(column2_pin, OUTPUT);
+	pinMode(column3_pin, OUTPUT);
+	pinMode(column4_pin, OUTPUT);
+	pinMode(column5_pin, OUTPUT);
+
+	digitalWrite(row_pin, HIGH);
+	digitalWrite(column1_pin, HIGH);
+	digitalWrite(column2_pin, HIGH);
+	digitalWrite(column3_pin, HIGH);
+	digitalWrite(column4_pin, HIGH);
+	digitalWrite(column5_pin, HIGH);
 	
 	Serial.begin(9600); // open serial terminal
 	Serial.flush();
