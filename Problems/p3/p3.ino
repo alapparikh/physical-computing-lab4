@@ -17,7 +17,41 @@
 
 #include <proc.h>
 
+class Loudspeaker {
+  Lock* _l;
+  Cond* _c;
+  int num_waiting;
+  bool available;
 
+public:
+  Loudspeaker() {
+    _l = new Lock();
+    _c = new Cond(_l);
+    num_waiting = 0;
+    available = true;
+  };
+
+  void acquire (){
+    _l->lock();
+    if (!available) {
+      _l->unlock();
+      _c->wait();
+    }
+    available = false;
+    _l->unlock();
+  }
+
+  void release() {
+    _l->lock();
+    available = true;
+    if (_c->waiting()) {
+      _c->signal();
+    } else {
+      _l->unlock();
+    }
+  }
+
+};
 
 class Barrier {
 
@@ -62,6 +96,7 @@ class Barrier {
 };
 
 Barrier B(3);
+Loudspeaker speaker;
 
 class CalcThread : Process {
   public:

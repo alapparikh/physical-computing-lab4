@@ -26,14 +26,14 @@
 
 #include <proc.h>
 
-class ReportingArea {
+class Loudspeaker {
   Lock* _l;
   Cond* _c;
   int num_waiting;
   bool available;
 
 public:
-  ReportingArea() {
+  Loudspeaker() {
     _l = new Lock();
     _c = new Cond(_l);
     num_waiting = 0;
@@ -136,7 +136,7 @@ class MatingArea {
 };
 
 MatingArea ma;
-ReportingArea ra;
+Loudspeaker speaker;
 
 class He : Process {
   int _id;
@@ -168,14 +168,14 @@ class She : Process {
 
     void loop () {
       delay(random(300, 1500)); //waste time
-      ra.acquire();
+      speaker.acquire();
       Serial.println("She: I'm born!");
       Serial.println("She: Adult now, time to form a triad!");
-      ra.release();
+      speaker.release();
       ma.she_ready(); //do not pass until there is a he and an it
-      ra.acquire();
+      speaker.acquire();
       Serial.println("She: Yay, I'm part of a triad!");
-      ra.release();
+      speaker.release();
     }
 };
 
@@ -186,14 +186,14 @@ class It : Process {
 
     void loop () {
       delay(random(300, 1500)); //waste time
-      ra.acquire();
+      speaker.acquire();
       Serial.println("It: I'm born!");
       Serial.println("It: Adult now, time to form a triad!");
-      ra.release();
+      speaker.release();
       ma.it_ready(); //do not pass until there is an it and a she
-      ra.acquire();
+      speaker.acquire();
       Serial.println("It: Yay, I'm part of a triad!");
-      ra.release();
+      speaker.release();
     }
 };
 
@@ -211,7 +211,7 @@ void setup() {
   Process::Init();  // start the threading library
 
   ma = MatingArea();
-  ra = ReportingArea(); // For print statements
+  speaker = Loudspeaker(); // For print statements
 
   h = new He(1); //start first thread
   h = new He(2); //start second thread
