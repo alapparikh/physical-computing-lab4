@@ -29,30 +29,28 @@
 class Loudspeaker {
   Lock* _l;
   Cond* _c;
-  int num_waiting;
-  bool available;
+  bool avail;
 
 public:
   Loudspeaker() {
     _l = new Lock();
     _c = new Cond(_l);
-    num_waiting = 0;
-    available = true;
+    avail = true;
   };
 
   void acquire (){
     _l->lock();
-    if (!available) {
+    if (!avail) {
       _l->unlock();
       _c->wait();
     }
-    available = false;
+    avail = false;
     _l->unlock();
   }
 
   void release() {
     _l->lock();
-    available = true;
+    avail = true;
     if (_c->waiting()) {
       _c->signal();
     } else {

@@ -1,4 +1,4 @@
-/* Barrier synchronization
+ /* Barrier synchronization
  *
  * A common pattern used in parallel programs is to have processing in two stages: computation and communication.
  * First, all threads do computation or IO in parallel.  When every thread has finished,
@@ -17,33 +17,85 @@
 
 #include <proc.h>
 
+int STROBE_PIN = 11;
+int DATA_PIN = 12;
+int CLOCK_PIN = 13;
+
+int COLUMN1_PIN = 4;
+int COLUMN2_PIN = 5;
+int COLUMN3_PIN = 6;
+int COLUMN4_PIN = 7;
+int COLUMN5_PIN = 8;
+int COLUMN_PINS[5] = {
+  COLUMN1_PIN, COLUMN2_PIN, COLUMN3_PIN, COLUMN4_PIN, COLUMN5_PIN
+};
+int COLUMNS[5] = {0, 0, 0, 0, 0};
+
+int ROWS_ALL_OFF = 0x00;
+int ROWS_ALL_ON = 0xFF;
+
+
+int ROW_VALUES[7] = {
+  0x01, // row 1 - 0000 0001
+  0x02, // row 2 - 0000 0010
+  0x04, // row 3 - 0000 0100
+  0x08, // row 4 - 0000 1000
+  0x10, // row 5 - 0001 0000
+  0x20, // row 6 - 0010 0000
+  0x40  // row 7 - 0100 0000
+};
+
+void light_LED(int col, int iter) {
+  int row_num = iter % 7;
+
+  // Report LED status
+  Serial.print("Displaying pixel at (");
+  Serial.print(col);
+  Serial.print(",");
+  Serial.print(row_num);
+  Serial.print(") for iteration ");
+  Serial.println(iter);
+
+  // Light the LED
+  digitalWrite(STROBE_PIN, LOW);
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, ROW_VALUES[row_num]);
+  digitalWrite(STROBE_PIN, HIGH);
+  delay(1000);
+}
+
 class Loudspeaker {
   Lock* _l;
   Cond* _c;
-  int num_waiting;
-  bool available;
+  bool avail;
 
 public:
   Loudspeaker() {
     _l = new Lock();
     _c = new Cond(_l);
-    num_waiting = 0;
-    available = true;
+    avail = true;
   };
+
+  void annouce(char const *message) {
+    acquire();
+    Serial.print(message);
+    Serial.println();
+    Serial.flush();
+    release();
+  }
 
   void acquire (){
     _l->lock();
-    if (!available) {
+    if (!avail) {
       _l->unlock();
       _c->wait();
     }
-    available = false;
+    avail = false;
     _l->unlock();
   }
 
   void release() {
     _l->lock();
-    available = true;
+    avail = true;
     if (_c->waiting()) {
       _c->signal();
     } else {
@@ -62,14 +114,14 @@ class Barrier {
      * a reminder on the syntax. */
     Lock* _l;
     Cond* _c;
-    int _n;
+    int _num;
     int waiting;
 
   public:
-    Barrier (int n) {  //Constructor for club
+    Barrier (int num) {  //Constructor for barrier
       _l = new Lock();
       _c = new Cond(_l);
-      _n = n;
+      _num = num;
       waiting = 0;
     }
 
@@ -78,32 +130,54 @@ class Barrier {
       _c = new Cond(_l);
     }
 
-    void wait() {
-      /*TODO: Only return when _n other threads have also called wait*/
+    void wait(int id, int barrier_num) {
+      /* Only return when _num other threads have also called wait*/
       _l->lock();
-      if (waiting < _n-1){
+      Serial.print(id);
+      Serial.print(" - HIT BARRIER (waiting=");
+      Serial.print(waiting);
+      Serial.print(") barrier_num=");
+      Serial.println(barrier_num);
+      Serial.flush();
+
+      if (waiting < (_num - 1)) {
         waiting++;
+        Serial.print(id);
+        Serial.print(" - WAIT (waiting=");
+        Serial.print(waiting);
+        Serial.println(")");
+        Serial.flush();
         _l->unlock();
         _c->wait();
         waiting--;
       }
-      if (waiting > 0){
+      if (waiting > 0 && _c->waiting()) {
+        Serial.print(id);
+        Serial.print(" - SIGNAL (waiting=");
+        Serial.print(waiting);
+        Serial.println(")");
+        Serial.flush();
         _c->signal();
       } else {
+        Serial.print(id);
+        Serial.print(" - CONTINUE (waiting=");
+        Serial.print(waiting);
+        Serial.println(")");
+        Serial.flush();
         _l->unlock();
       }
     }
 };
 
 Barrier B(3);
-Loudspeaker speaker;
+Loudspeaker SPEAKER;
 
 class CalcThread : Process {
   public:
   virtual int get_num();
 };
 
-CalcThread* threads [3];
+CalcThread* THREADS [3];
 
 class Sum : CalcThread {
 
@@ -123,20 +197,28 @@ class Sum : CalcThread {
     }
 
     void loop () {
+      // SPEAKER.annouce("Sum starting computation!");
+
       delay(random(300, 1500)); //do some computation
       _iteration++;
       _num = random(1,100);
+      // Wait for everyone to finish computation
+      B.wait(_id, 1);
+
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
-      B.wait();
-
       int output = 0;
-      for (int i = 0; i < 3; ++i)
-        output += threads[i]->get_num();
+      for (int i = 0; i < 3; ++i) {
+        output += THREADS[i]->get_num();
+      }
 
-      Serial.print("Sum = ");
-      Serial.println(output);
+      // SPEAKER.annouce("Sum DONE computation!");
+      // SPEAKER.acquire();
+      // light_LED(_id, _iteration);
+      // SPEAKER.release();
+      // SPEAKER.annouce("SUM result");
 
-      B.wait();
+      // Wait for everyone to finish communication
+      B.wait(_id, 2);
     }
 };
 
@@ -157,20 +239,28 @@ class Mean : CalcThread {
       return _num;
     }
     void loop () {
+      // SPEAKER.annouce("Mean starting computation!");
+
       delay(random(300, 1500)); //do some computation
       _iteration++;
       _num = random(1, 100);
+      // Wait for everyone to finish computation
+      B.wait(_id, 1);
+
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
-      B.wait();
-
       float output = 0.0;
-      for (int i = 0; i < 3; ++i)
-        output += threads[i]->get_num()/3.0;
+      for (int i = 0; i < 3; ++i) {
+        output += THREADS[i]->get_num()/3.0;
+      }
 
-      Serial.print("Mean = ");
-      Serial.println(output);
+      // SPEAKER.annouce("Mean DONE computation!");
+      // SPEAKER.acquire();
+      // light_LED(_id, _iteration);
+      // SPEAKER.release();
+      // SPEAKER.annouce("MEAN result");
 
-      B.wait();
+      // Wait for everyone to finish communication
+      B.wait(_id, 2);
     }
 };
 
@@ -191,19 +281,28 @@ class Printer : CalcThread {
       return _num;
     }
     void loop () {
+      // SPEAKER.annouce("Printer starting computation!");
+
       delay(random(300, 1500)); //do some computation
       _iteration++;
       _num = random(300, 1500);
+      // Wait for everyone to finish computation
+      B.wait(_id, 1);
+
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
-      B.wait();
 
-      Serial.print("Numbers: [");
-      for (int i = 0; i < 3; ++i) {
-        Serial.print(threads[i]->get_num());
-      }
-      Serial.println("]");
+      // SPEAKER.annouce("PRINTER result");
+      // SPEAKER.acquire();
+      // light_LED(_id, _iteration);
+      // Serial.print("Numbers: [");
+      // for (int i = 0; i < 3; ++i) {
+      //   Serial.print(THREADS[i]->get_num());
+      // }
+      // Serial.println("]");
+      // SPEAKER.release();
 
-      B.wait();
+      // Wait for everyone to finish communication
+      B.wait(_id, 2);
     }
 };
 
@@ -213,9 +312,30 @@ void setup() {
   Mean *m;
   Printer *p;
 
+  pinMode(STROBE_PIN, OUTPUT);
+  pinMode(DATA_PIN, OUTPUT);
+  pinMode(CLOCK_PIN, OUTPUT);
+  pinMode(COLUMN1_PIN, OUTPUT);
+  pinMode(COLUMN2_PIN, OUTPUT);
+  pinMode(COLUMN3_PIN, OUTPUT);
+  pinMode(COLUMN4_PIN, OUTPUT);
+  pinMode(COLUMN5_PIN, OUTPUT);
+
+  digitalWrite(COLUMN1_PIN, HIGH);
+  digitalWrite(COLUMN2_PIN, HIGH);
+  digitalWrite(COLUMN3_PIN, HIGH);
+  digitalWrite(COLUMN4_PIN, HIGH);
+  digitalWrite(COLUMN5_PIN, HIGH);
+
+  digitalWrite(STROBE_PIN, LOW);
+  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, ROWS_ALL_OFF);
+  digitalWrite(STROBE_PIN, HIGH);
+
   Serial.begin(9600); // open serial terminal
   Serial.flush();
+
   Process::Init();  // start the threading library
+
   B.reinit();
 
   s = new Sum(1); //start first thread
