@@ -139,16 +139,25 @@ MatingArea ma;
 ReportingArea ra;
 
 class He : Process {
+  int _id;
 
   public:
-    He () {}
+    He (int id) {
+      _id = id;
+    }
 
     void loop () {
       delay(random(300, 1500)); //waste time
-      Serial.println("He: I'm born!");
-      Serial.println("He: Adult now, time to form a triad!");
+      Serial.print("He (");
+      Serial.print(_id);
+      Serial.println("): I'm born!");
+      Serial.print("He (");
+      Serial.print(_id);
+      Serial.println("): Adult now, time to form a triad!");
       ma.he_ready(); //do not pass until there is a she and an it
-      Serial.println("He: Yay, I'm part of a triad!");
+      Serial.print("He (");
+      Serial.print(_id);
+      Serial.println("): Yay, I'm part of a triad!");
     }
 };
 
@@ -197,13 +206,15 @@ void setup() {
   It *i;
 
   Serial.begin(9600); // open serial terminal
+  Serial.flush();
+
   Process::Init();  // start the threading library
 
   ma = MatingArea();
   ra = ReportingArea(); // For print statements
 
-  h = new He(); //start first thread
-  //h = new He(); //start second thread
+  h = new He(1); //start first thread
+  h = new He(2); //start second thread
   s = new She(); //start third thread
   i = new It(); //start fourth thread
 }
@@ -212,4 +223,3 @@ void setup() {
 void loop() {
   Process::Start();
 }
-
