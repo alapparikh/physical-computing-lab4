@@ -75,7 +75,7 @@ public:
     avail = true;
   };
 
-  void annouce(char const *message) {
+  void announce(char const *message) {
     acquire();
     Serial.print(message);
     Serial.println();
@@ -197,7 +197,7 @@ class Sum : CalcThread {
     }
 
     void loop () {
-      // SPEAKER.annouce("Sum starting computation!");
+      SPEAKER.announce("Sum starting computation!");
 
       delay(random(300, 1500)); //do some computation
       _iteration++;
@@ -211,11 +211,11 @@ class Sum : CalcThread {
         output += THREADS[i]->get_num();
       }
 
-      // SPEAKER.annouce("Sum DONE computation!");
+      SPEAKER.announce("Sum DONE computation!");
       // SPEAKER.acquire();
       // light_LED(_id, _iteration);
       // SPEAKER.release();
-      // SPEAKER.annouce("SUM result");
+      // SPEAKER.announce("SUM result");
 
       // Wait for everyone to finish communication
       B.wait(_id, 2);
@@ -239,7 +239,7 @@ class Mean : CalcThread {
       return _num;
     }
     void loop () {
-      // SPEAKER.annouce("Mean starting computation!");
+      SPEAKER.announce("Mean starting computation!");
 
       delay(random(300, 1500)); //do some computation
       _iteration++;
@@ -253,11 +253,11 @@ class Mean : CalcThread {
         output += THREADS[i]->get_num()/3.0;
       }
 
-      // SPEAKER.annouce("Mean DONE computation!");
+      SPEAKER.announce("Mean DONE computation!");
       // SPEAKER.acquire();
       // light_LED(_id, _iteration);
       // SPEAKER.release();
-      // SPEAKER.annouce("MEAN result");
+      // SPEAKER.announce("MEAN result");
 
       // Wait for everyone to finish communication
       B.wait(_id, 2);
@@ -281,7 +281,7 @@ class Printer : CalcThread {
       return _num;
     }
     void loop () {
-      // SPEAKER.annouce("Printer starting computation!");
+      SPEAKER.announce("Printer starting computation!");
 
       delay(random(300, 1500)); //do some computation
       _iteration++;
@@ -291,7 +291,7 @@ class Printer : CalcThread {
 
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
 
-      // SPEAKER.annouce("PRINTER result");
+      SPEAKER.announce("PRINTER result");
       // SPEAKER.acquire();
       // light_LED(_id, _iteration);
       // Serial.print("Numbers: [");
