@@ -133,37 +133,37 @@ class Barrier {
     void wait(int id, int barrier_num) {
       /* Only return when _num other threads have also called wait*/
       _l->lock();
-      Serial.print(id);
-      Serial.print(" - HIT BARRIER (waiting=");
-      Serial.print(waiting);
-      Serial.print(") barrier_num=");
-      Serial.println(barrier_num);
-      Serial.flush();
+      // Serial.print(id);
+      // Serial.print(" - HIT BARRIER (waiting=");
+      // Serial.print(waiting);
+      // Serial.print(") barrier_num=");
+      // Serial.println(barrier_num);
+      // Serial.flush();
 
       if (waiting < (_num - 1)) {
         waiting++;
-        Serial.print(id);
-        Serial.print(" - WAIT (waiting=");
-        Serial.print(waiting);
-        Serial.println(")");
-        Serial.flush();
+        // Serial.print(id);
+        // Serial.print(" - WAIT (waiting=");
+        // Serial.print(waiting);
+        // Serial.println(")");
+        // Serial.flush();
         _l->unlock();
         _c->wait();
         waiting--;
       }
       if (waiting > 0 && _c->waiting()) {
-        Serial.print(id);
-        Serial.print(" - SIGNAL (waiting=");
-        Serial.print(waiting);
-        Serial.println(")");
-        Serial.flush();
+        // Serial.print(id);
+        // Serial.print(" - SIGNAL (waiting=");
+        // Serial.print(waiting);
+        // Serial.println(")");
+        // Serial.flush();
         _c->signal();
       } else {
-        Serial.print(id);
-        Serial.print(" - CONTINUE (waiting=");
-        Serial.print(waiting);
-        Serial.println(")");
-        Serial.flush();
+        // Serial.print(id);
+        // Serial.print(" - CONTINUE (waiting=");
+        // Serial.print(waiting);
+        // Serial.println(")");
+        // Serial.flush();
         _l->unlock();
       }
     }
@@ -179,7 +179,7 @@ class CalcThread : Process {
 
 CalcThread* THREADS [3];
 
-class Sum : CalcThread {
+class Sum : public CalcThread {
 
   int _id;
   int _iteration;
@@ -211,18 +211,19 @@ class Sum : CalcThread {
         output += THREADS[i]->get_num();
       }
 
-      SPEAKER.announce("Sum DONE computation!");
-      // SPEAKER.acquire();
-      // light_LED(_id, _iteration);
-      // SPEAKER.release();
-      // SPEAKER.announce("SUM result");
+      //SPEAKER.announce("Sum DONE computation!");
+      SPEAKER.acquire();
+      light_LED(_id, _iteration);
+      Serial.print("Sum: ");
+      Serial.println(output);
+      SPEAKER.release();
 
       // Wait for everyone to finish communication
       B.wait(_id, 2);
     }
 };
 
-class Mean : CalcThread {
+class Mean : public CalcThread {
 
   int _id;
   int _iteration;
@@ -253,18 +254,19 @@ class Mean : CalcThread {
         output += THREADS[i]->get_num()/3.0;
       }
 
-      SPEAKER.announce("Mean DONE computation!");
-      // SPEAKER.acquire();
-      // light_LED(_id, _iteration);
-      // SPEAKER.release();
-      // SPEAKER.announce("MEAN result");
+      //SPEAKER.announce("Mean DONE computation!");
+      SPEAKER.acquire();
+      Serial.print("Mean: ");
+      Serial.println(output);
+      light_LED(_id, _iteration);
+      SPEAKER.release();
 
       // Wait for everyone to finish communication
       B.wait(_id, 2);
     }
 };
 
-class Printer : CalcThread {
+class Printer : public CalcThread {
 
   int _id;
   int _iteration;
@@ -285,21 +287,21 @@ class Printer : CalcThread {
 
       delay(random(300, 1500)); //do some computation
       _iteration++;
-      _num = random(300, 1500);
+      _num = random(1, 100);
       // Wait for everyone to finish computation
       B.wait(_id, 1);
 
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
 
-      SPEAKER.announce("PRINTER result");
-      // SPEAKER.acquire();
-      // light_LED(_id, _iteration);
-      // Serial.print("Numbers: [");
-      // for (int i = 0; i < 3; ++i) {
-      //   Serial.print(THREADS[i]->get_num());
-      // }
-      // Serial.println("]");
-      // SPEAKER.release();
+      //SPEAKER.announce("PRINTER result");
+      SPEAKER.acquire();
+      light_LED(_id, _iteration);
+      Serial.print("Numbers: [");
+      for (int i = 0; i < 3; ++i) {
+        Serial.print(THREADS[i]->get_num());
+      }
+      Serial.println("]");
+      SPEAKER.release();
 
       // Wait for everyone to finish communication
       B.wait(_id, 2);
@@ -341,6 +343,10 @@ void setup() {
   s = new Sum(1); //start first thread
   m = new Mean(2); //start second thread
   p = new Printer(3); //start third thread
+
+  THREADS[0] = s;
+  THREADS[1] = m;
+  THREADS[2] = p;
 }
 
 // the loop routine runs over and over again forever:

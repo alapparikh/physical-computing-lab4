@@ -179,7 +179,7 @@ public:
     COLUMNS[_id - 1] = 0;
     light_LED();
     daclub.redditor_exit();
-    delay(100);
+    hang_out();
   }
 };
 
@@ -205,7 +205,7 @@ public:
     Serial.print("2b");
     light_LED();
     daclub.fourchanner_exit();
-    delay(100);
+    hang_out();
   }
 };
 

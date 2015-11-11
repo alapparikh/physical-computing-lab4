@@ -188,7 +188,7 @@ class It : Process {
       Serial.println("It: I'm born!");
       Serial.println("It: Adult now, time to form a triad!");
       speaker.release();
-      ma.it_ready(); //do not pass until there is an it and a she
+      ma.it_ready(); //do not pass until there is a he and a she
       speaker.acquire();
       Serial.println("It: Yay, I'm part of a triad!");
       speaker.release();
