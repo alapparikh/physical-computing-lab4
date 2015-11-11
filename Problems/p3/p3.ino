@@ -49,12 +49,12 @@ void light_LED(int col, int iter) {
   int row_num = iter % 7;
 
   // Report LED status
-  Serial.print("Displaying pixel at (");
-  Serial.print(col);
-  Serial.print(",");
-  Serial.print(row_num);
-  Serial.print(") for iteration ");
-  Serial.println(iter);
+  // Serial.print("Displaying pixel at (");
+  // Serial.print(col);
+  // Serial.print(",");
+  // Serial.print(row_num);
+  // Serial.print(") for iteration ");
+  // Serial.println(iter);
 
   // Light the LED
   digitalWrite(COLUMN_PINS[col], LOW);
