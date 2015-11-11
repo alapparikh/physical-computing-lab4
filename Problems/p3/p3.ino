@@ -57,10 +57,17 @@ void light_LED(int col, int iter) {
   Serial.println(iter);
 
   // Light the LED
+  digitalWrite(COLUMN_PINS[col], LOW);
   digitalWrite(STROBE_PIN, LOW);
   shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, ROW_VALUES[row_num]);
   digitalWrite(STROBE_PIN, HIGH);
   delay(1000);
+}
+
+void reset_columns () {
+	for (int i=0; i<5; i++) {
+        digitalWrite(COLUMN_PINS[i], HIGH);
+    }
 }
 
 class Loudspeaker {
@@ -165,6 +172,9 @@ class Barrier {
         // Serial.println(")");
         // Serial.flush();
         _l->unlock();
+        if (barrier_num == 2) {
+        	reset_columns();
+        }
       }
     }
 };
