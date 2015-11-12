@@ -47,15 +47,6 @@ int ROW_VALUES[7] = {
 
 void light_LED(int col, int iter) {
   int row_num = iter % 7;
-
-  // Report LED status
-  // Serial.print("Displaying pixel at (");
-  // Serial.print(col);
-  // Serial.print(",");
-  // Serial.print(row_num);
-  // Serial.print(") for iteration ");
-  // Serial.println(iter);
-
   // Light the LED
   digitalWrite(COLUMN_PINS[col], LOW);
   digitalWrite(STROBE_PIN, LOW);
@@ -140,37 +131,15 @@ class Barrier {
     void wait(int id, int barrier_num) {
       /* Only return when _num other threads have also called wait*/
       _l->lock();
-      // Serial.print(id);
-      // Serial.print(" - HIT BARRIER (waiting=");
-      // Serial.print(waiting);
-      // Serial.print(") barrier_num=");
-      // Serial.println(barrier_num);
-      // Serial.flush();
-
       if (waiting < (_num - 1)) {
         waiting++;
-        // Serial.print(id);
-        // Serial.print(" - WAIT (waiting=");
-        // Serial.print(waiting);
-        // Serial.println(")");
-        // Serial.flush();
         _l->unlock();
         _c->wait();
         waiting--;
       }
       if (waiting > 0 && _c->waiting()) {
-        // Serial.print(id);
-        // Serial.print(" - SIGNAL (waiting=");
-        // Serial.print(waiting);
-        // Serial.println(")");
-        // Serial.flush();
         _c->signal();
       } else {
-        // Serial.print(id);
-        // Serial.print(" - CONTINUE (waiting=");
-        // Serial.print(waiting);
-        // Serial.println(")");
-        // Serial.flush();
         _l->unlock();
         if (barrier_num == 2) {
         	reset_columns();
@@ -221,7 +190,6 @@ class Sum : public CalcThread {
         output += THREADS[i]->get_num();
       }
 
-      //SPEAKER.announce("Sum DONE computation!");
       SPEAKER.acquire();
       light_LED(_id, _iteration);
       Serial.print("Sum: ");
@@ -264,7 +232,6 @@ class Mean : public CalcThread {
         output += THREADS[i]->get_num()/3.0;
       }
 
-      //SPEAKER.announce("Mean DONE computation!");
       SPEAKER.acquire();
       Serial.print("Mean: ");
       Serial.println(output);
@@ -303,7 +270,6 @@ class Printer : public CalcThread {
 
       /* TODO: Make the pixel at (_id, _iteration) of the LED matrix light up (and stay lit)*/
 
-      //SPEAKER.announce("PRINTER result");
       SPEAKER.acquire();
       light_LED(_id, _iteration);
       Serial.print("Numbers: [");
