@@ -144,19 +144,6 @@ class Club {
 
 Club daclub;
 
-void light_LED() {
-  for(int i = 0; i < 5; i++){
-    // Serial.print(COLUMNS[i]);
-    if (COLUMNS[i]) {
-      digitalWrite(COLUMN_PINS[i], LOW);
-    }
-    else {
-      digitalWrite(COLUMN_PINS[i], HIGH);
-    }
-  }
-  // Serial.println();
-}
-
 class Redditor: Process {
   int _id;
 
@@ -170,14 +157,10 @@ public:
     Serial.print("Redditor ");
     Serial.print(_id);
     Serial.println(": in the club");
-    COLUMNS[_id - 1] = 1;
-    // Serial.print("1a");
     /* Light up column #_id on the LED matrix */
-    light_LED();
+    digitalWrite(COLUMN_PINS[_id-1], HIGH);
     hang_out();
-    // Serial.print("1b");
-    COLUMNS[_id - 1] = 0;
-    light_LED();
+    digitalWrite(COLUMN_PINS[_id-1], LOW);
     Serial.flush();
     daclub.redditor_exit();
     hang_out();
@@ -198,13 +181,9 @@ public:
     Serial.print(_id);
     Serial.println(": in the club");
     /* light up column #_id on the LED matrix */
-    COLUMNS[_id - 1] = 1;
-    // Serial.print("2a");
-    light_LED();
+    digitalWrite(COLUMN_PINS[_id-1], HIGH);
     hang_out();
-    COLUMNS[_id - 1] = 0;
-    // Serial.print("2b");
-    light_LED();
+    digitalWrite(COLUMN_PINS[_id-1], LOW);
     Serial.flush();
     daclub.fourchanner_exit();
     hang_out();
